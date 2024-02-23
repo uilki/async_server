@@ -25,16 +25,16 @@ void Connection::start()
 
 bool Connection::writeAsync(std::string str)
 {
-    auto slot = messages_.persist(str);
+    auto message = std::make_shared<std::string>(std::move(str));
     boost::asio::async_write(s_,
-                             boost::asio::buffer(messages_[slot]),
-                             [that=shared_from_this(), slot](const boost::system::error_code& ec, std::size_t sz) {
+                             boost::asio::buffer(*message),
+                             [message](const boost::system::error_code& ec, std::size_t sz) {
                                  if (ec) {
                                      log_info << "onWrite(): " << ec.message()<< " " << ec.category().name()<< " " << ec.value();
                                      return;
                                  }
-                                 that->messages_.release(slot);
-                                 log_info << "onWrite, " << sz << " bytes "<< that->s_.remote_endpoint();
+
+                                 log_info << "onWrite, " << sz << " bytes ";
                              });
     return true;
 }
