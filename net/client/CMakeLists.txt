@@ -8,5 +8,6 @@ include_directories(
     ../../util
 )
 
-add_library(clientlib STATIC ${SOURCES})
+add_library(clientlib STATIC ${SOURCES}
+    authentificator.h authentificator.cpp)
 target_link_libraries(clientlib util core)

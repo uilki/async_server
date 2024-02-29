@@ -20,7 +20,7 @@ class RequestParser
 {
 public:
     struct Request{
-        enum { invalidID };
+        enum { signIn, signUp, invalidToken, userExists, badPassword, unregistered, success, refused, BadRequest };
         static constexpr auto invalidMessage{"parse error"};
 
         size_t                 id  {};
@@ -31,7 +31,7 @@ public:
 public:
     RequestParser();
 
-    std::string fromString(int transactionID, std::string name, std::string other = "") const;
+    std::string fromString(int transactionID, std::string name = "", std::string other = "") const;
     Request parse(const char* json) const;
 
 private:

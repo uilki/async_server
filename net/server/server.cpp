@@ -1,4 +1,5 @@
 #include "server.h"
+#include "auth/serverfabric.h"
 #include "strand.h"
 #include "connection.h"
 #include "logger.h"
@@ -7,7 +8,7 @@
 
 using tcp = boost::asio::ip::tcp;
 
-namespace net {
+namespace net::server {
 Server::Server(Executor &executor, const tcp &protocol, RequestHandler handler)
     : io_service_{executor.ioService()}
     , strand_    {executor.strand()}
@@ -88,9 +89,9 @@ void Server::onAccept(const std::error_code &err, tcp::socket socket)
         else // acceptor stopped, don't accept again.
             { return; }
     }
-    auto conn = std::make_shared<server::Connection>(std::move(socket), pool_, handler_);
+    auto conn = std::make_shared<server::Connection>(std::move(socket), strand_, pool_, handler_);
     conn->start();
 
     startAccept();
 }
-} // namespace net
+} // namespace namespace net::server

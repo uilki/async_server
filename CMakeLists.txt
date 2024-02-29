@@ -31,9 +31,10 @@ message("LIBRARY_OUTPUT_DIRECTORY " ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 message("ARCHIVE_OUTPUT_DIRECTORY " ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY})
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--no-undefined -Wl,--exclude-libs,ALL")
-
+enable_testing()
 add_subdirectory(functions)
 add_subdirectory(client)
 add_subdirectory(util)
 add_subdirectory(net)
 add_subdirectory(server)
+add_subdirectory(test)

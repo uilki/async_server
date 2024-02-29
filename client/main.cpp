@@ -1,7 +1,8 @@
+
 #include "executor.h"
 #include "connector.h"
 #include "connection.h"
-
+#include "authentificator.h"
 #include <future>
 #include <iostream>
 
@@ -69,26 +70,39 @@ int main(int argc, char* argv[])
         }
     });
 
+    std::promise<std::shared_ptr<client::Authentificator>> authP;
+    auto authF = authP.get_future();
+    std::promise<boost::asio::ip::tcp::socket> sockP;
+    auto sockF = sockP.get_future();
 
-    connector.connect([&connP, &doneP](boost::asio::ip::tcp::socket s, const std::error_code& ec) {
+    connector.connect([&authP, &sockP](boost::asio::ip::tcp::socket s, const std::error_code& ec) {
         if (ec) {
             std::cerr << "Failed to connect: " << ec.message() << '\n';
-            connP.set_value({});
-            doneP.set_value();
+            authP.set_value({});
             return;
         }
 
-        auto conn = std::make_shared<client::Connection>(std::move(s));
+        auto auth= std::make_shared<client::Authentificator>(std::move(s),sockP,"name", "password");
+        auth->start();
 
-        conn->start([&doneP](const std::error_code& ec) {
-            std::cout << "Connection done: " << ec.message() << '\n';
-            doneP.set_value();
-        });
-
-        connP.set_value(conn);
+        authP.set_value(auth);
     });
 
-    auto conn = connF.get();
+    auto auth = authF.get();
+
+    if (!auth) {
+        std::cerr << "Failed to connect: " << 2 << '\n';
+        return 11;
+    }
+    auth->logIn();
+    auto sock = sockF.get();
+    if (!sock.is_open()) return 5;
+    auto conn = std::make_shared<client::Connection>(std::move(sock));
+    conn->start([&doneP](const std::error_code& ec) {
+        std::cout << "Connection done: " << ec.message() << '\n';
+        doneP.set_value();
+    });
+    //connP.set_value(conn);
 
     if (conn) {
         std::cout << "Type \"exit\" to disconnect\n";

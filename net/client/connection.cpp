@@ -8,7 +8,7 @@
 
 namespace  client {
 Connection::Connection(boost::asio::ip::tcp::socket s)
-    : s_            {std::move(s)}
+    : s_     {std::move(s)}
     { log_info << "Connected: " << s_.remote_endpoint(); }
 
 void Connection::start(DoneFn dfn)
@@ -19,39 +19,31 @@ void Connection::start(DoneFn dfn)
 
 bool Connection::writeAsync(std::string str)
 {
-    std::promise<bool> p;
-    auto f = p.get_future();
-
     auto firstSpace = str.find_first_of(' ');
+    auto mes = std::make_shared<std::string>(parser_.fromString(transactionId_++, str.substr(0, firstSpace), str.substr(firstSpace + 1)));
 
-    // We want this to be executed on ioService, i.e. serialized with read code.
     boost::asio::async_write(s_,
-                             boost::asio::buffer(parser_.fromString(transactionId_++, str.substr(0, firstSpace), str.substr(firstSpace + 1))),
-                             [this, &p](const boost::system::error_code& ec, std::size_t sz) {
-                                 if (!dfn_) {
-                                     p.set_value(false);
-                                     return;
-                                 }
+                             boost::asio::buffer(*mes),
+                             [this, mes](const boost::system::error_code& ec, std::size_t sz) {
+                                 if (!dfn_)
+                                     { return; }
 
                                  if (ec) {
-                                     log_info << "onWrite(): " << ec.message();
+                                     log_info << "Connection onWrite(): " << ec.message();
                                      done(ec);
-                                     p.set_value(false);
                                      return;
                                  }
 
-                                 log_info << "onWrite(" << sz << ")";
+                                 log_info << "Connection onWrite(" << *mes << ")";
+                             });
 
-                                 p.set_value(true);
-                            });
-
-    return f.get();
+    return true;
 }
 
 void Connection::onRead(const std::error_code &ec, uint32_t sz)
 {
     if (!dfn_)
-    { return; }
+        { return; }
 
     if (ec) {
         log_info << "onRead(): " << ec.message();
@@ -65,14 +57,7 @@ void Connection::onRead(const std::error_code &ec, uint32_t sz)
         std::getline(is, line);
 
         try
-        {
-            util::RequestParser::Request parsedResponse = parser_.parse(line.c_str());
-            std::ostringstream os;
-            os << "\nServer responce:\nTransaction id: " << parsedResponse.id << '\n';
-            for (const auto& v : parsedResponse.args)
-                { os << '\t' << v << '\n' ; }
-            log_info << os.str();
-        }
+            { processResponse(parser_.parse(line.c_str())); }
         catch (util::BadRequest& e)
             { log_info << "Failed to parse response: " << e.what(); }
     }
@@ -96,12 +81,20 @@ void Connection::done(const std::error_code& ec)
     cb(ec);
 }
 
+void Connection::processResponse(const util::RequestParser::Request &r) const
+{
+    std::ostringstream os;
+    os << "\nServer responce:\nTransaction id: " << r.id << '\n';
+    for (const auto& v : r.args)
+        { os << '\t' << v << '\n' ; }
+    log_info << os.str();
+}
+
 Connection::TransactionID Connection::TransactionID::operator ++(int)
 {
     auto temp = *this;
-    if (id_ == std::numeric_limits<uint16_t>::max()) id_ = util::RequestParser::Request::invalidID + 1;
+    if (id_ == std::numeric_limits<uint16_t>::max()) id_ = util::RequestParser::Request::BadRequest + 1;
     else ++id_;
     return temp;
 }
-
 } // namespace  client

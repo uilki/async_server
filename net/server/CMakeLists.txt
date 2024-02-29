@@ -1,9 +1,12 @@
 file(GLOB SOURCES
     *.h
     *.cpp
+    */*.h
+    */*.cpp
 )
 
 include_directories(
+    *
     ../core
     ../../util
 )

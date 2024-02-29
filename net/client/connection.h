@@ -12,9 +12,8 @@ class Connection: public std::enable_shared_from_this<Connection>
     struct TransactionID {
         TransactionID operator++(int);
         inline operator uint16_t() const { return id_; };
-        uint16_t id_{util::RequestParser::Request::invalidID + 1};
+        uint16_t id_{util::RequestParser::Request::BadRequest + 1};
     };
-
     using DoneFn = std::function<void(const std::error_code&)>;
 public:
     using ConnectionPtr = std::shared_ptr<Connection>;
@@ -31,6 +30,7 @@ private:
     void onRead(const std::error_code &ec, std::uint32_t sz);
 
     void done(const std::error_code &ec);
+    void processResponse(const util::RequestParser::Request& r) const;
 
     boost::asio::ip::tcp::socket s_;
     boost::asio::streambuf       b_;

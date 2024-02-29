@@ -8,8 +8,8 @@
 
 namespace net {
 using ServiceType = boost::asio::io_service;
-using StrandType = boost::asio::strand<ServiceType::executor_type>;
-using StrandPtr = std::shared_ptr<StrandType>;
+using StrandType  = boost::asio::strand<ServiceType::executor_type>;
+using StrandPtr   = std::shared_ptr<StrandType>;
 
 inline StrandPtr makeStrand(boost::asio::io_service& ioService)
     { return std::make_shared<StrandType>(boost::asio::make_strand(ioService)); }

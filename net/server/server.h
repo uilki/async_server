@@ -6,12 +6,12 @@
 
 #include <boost/asio/ip/tcp.hpp>
 
-namespace net {
+namespace net::server {
 class Server :  public std::enable_shared_from_this<Server>
 {
     enum {backlog = 10 };
 public:
-    using RequestHandler = std::function<std::string(std::string)>;
+    using RequestHandler = std::function<std::string(std::string, bool&)>;
 
     Server(Executor& executor, const boost::asio::ip::tcp& protocol, RequestHandler handler);
 
@@ -33,6 +33,6 @@ private:
     ThreadPool                     pool_      ;
     RequestHandler                 handler_   ;
 };
-} // namespace net
+} // namespace net::server
 
 #endif // __E91MRJHFEQGLMMPZZ361AGAJII8S6DR13FEOL5BUHPKKBVSKZ9275NLUXGSYKWFQET8KD9O5I__H__
