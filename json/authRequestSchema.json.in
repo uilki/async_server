@@ -1,0 +1,17 @@
+{
+    "type": "object",
+    "properties": {
+        "status": {
+            "type": "integer",
+            "minimum": 0
+        },
+        "other": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "minItems": 0
+        }
+    },
+    "required": ["status"]
+}
