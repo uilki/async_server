@@ -27,4 +27,11 @@
 *.out
 *.app
 
+# Crypto
+*.key
+*.crt
+*.csr
+*.pem
+*.key.*
+
 *.user

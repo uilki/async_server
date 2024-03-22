@@ -5,7 +5,7 @@ if (NOT DEFINED NAME)
     set(NAME "VUSERVER")
 endif()
 
-message("Project name:" ${NAME})
+message("Project name: " ${NAME})
 
 project(${NAME} LANGUAGES CXX)
 

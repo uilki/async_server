@@ -1,4 +1,5 @@
 #include "connection.h"
+#include "request.h"
 #include "logger.h"
 
 #include <boost/algorithm/string/split.hpp>
@@ -12,12 +13,17 @@
 using Request   = common::SessionRequest;
 using StringList = std::list<std::string>;
 
+using namespace boost::asio;
+
 namespace  client {
-Connection::Connection(boost::asio::ip::tcp::socket s)
-    : s_     {std::move(s)}
-    , parser_{"requestSchema.json"}
+Connection::Connection(Socket s)
+    : s_            {std::move(s)}
+    , parser_       {"requestSchema.json"}
     , transactionId_{common::SessionRequest::BadRequest + 1}
-    { log_info << "Connected: " << s_.remote_endpoint(); }
+    { log_info << "Connected: " << s_.lowest_layer().remote_endpoint(); }
+
+Connection::~Connection()
+    { closeSocket(); }
 
 void Connection::start(DoneFn dfn)
 {
@@ -36,22 +42,22 @@ bool Connection::writeAsync(std::string str)
         return std::make_pair(funName, result);
     }(std::move(str));
 
-    auto mes = std::make_shared<std::string>(parser_.toJson(getTransactionId(), funName, args) + '\n');
+    auto mesPtr = std::make_shared<std::string>(parser_.toJson(getTransactionId(), funName, args) + '\n');
 
-    boost::asio::async_write(s_,
-                             boost::asio::buffer(*mes),
-                             [this, mes](const boost::system::error_code& ec, std::size_t sz) {
-                                 if (!dfn_)
-                                     { return; }
+    async_write(s_,
+                buffer(*mesPtr),
+                [this, mesPtr](const boost::system::error_code& ec, std::size_t sz) {
+                    if (!dfn_)
+                        { return; }
 
-                                 if (ec) {
-                                     log_info << "Connection onWrite(): " << ec.message();
-                                     done(ec);
-                                     return;
-                                 }
+                    if (ec) {
+                        log_info << "Connection onWrite(): " << ec.message();
+                        done(ec);
+                        return;
+                    }
 
-                                 log_info << "Connection onWrite(" << *mes << ")";
-                             });
+                    log_info << "Connection onWrite(" << *mesPtr << ")";
+                 });
 
     return true;
 }
@@ -73,24 +79,30 @@ void Connection::onRead(const std::error_code &ec, uint32_t sz)
         std::getline(is, line);
 
         try
-        { processResponse(parser_.parse<Request,size_t, std::string, StringList>(line.c_str())); }
+         { processResponse(parser_.parse<Request,size_t, std::string, StringList>(line.c_str())); }
         catch (util::BadRequest& e)
             { log_info << "Failed to parse response: " << e.what(); }
     }
 
-    boost::asio::async_read_until(s_,
-                                  b_,
-                                  "\n",
-                                  std::bind(&Connection::onRead  ,
-                                            shared_from_this()   ,
-                                            std::placeholders::_1,
-                                            std::placeholders::_2 ));
+    async_read_until(s_,
+                     b_,
+                     "\n",
+                     std::bind(&Connection::onRead  ,
+                               shared_from_this()   ,
+                               std::placeholders::_1,
+                               std::placeholders::_2 ));
+}
+
+void Connection::closeSocket()
+{
+    boost::system::error_code err;
+    s_.shutdown();
+    s_.lowest_layer().close(err);
 }
 
 void Connection::done(const std::error_code& ec)
 {
-    boost::system::error_code err;
-    s_.close(err);
+    closeSocket();
 
     DoneFn cb;
     std::swap(dfn_, cb);

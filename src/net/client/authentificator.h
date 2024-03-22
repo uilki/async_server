@@ -4,15 +4,17 @@
 #include "requestparser.h"
 
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/ssl/stream.hpp>
 #include <boost/asio/streambuf.hpp>
+#include <boost/asio/ssl/stream.hpp>
 #include <future>
 
 namespace client {
 class Authentificator: public std::enable_shared_from_this<Authentificator>
 {
 public:
-    Authentificator(boost::asio::ip::tcp::socket s,
-                             std::promise<boost::asio::ip::tcp::socket> &authP,
+    Authentificator(boost::asio::ssl::stream<boost::asio::ip::tcp::socket> s,
+                             std::promise<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>> &authP,
                              std::string name,
                              std::string pass);
     ~Authentificator() = default;
@@ -28,10 +30,10 @@ private:
     void onRead(const std::error_code &ec, std::uint32_t sz);
     void done(const std::error_code &ec);
 
-    boost::asio::ip::tcp::socket s_;
-    boost::asio::streambuf       b_;
+    boost::asio::ssl::stream<boost::asio::ip::tcp::socket> s_;
+    boost::asio::streambuf                                 b_;
 
-    std::promise<boost::asio::ip::tcp::socket> &authP_;
+    std::promise<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>> &authP_;
     std::string         name_  ;
     std::string         pass_  ;
     util::RequestParser parser_;

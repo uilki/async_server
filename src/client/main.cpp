@@ -50,32 +50,32 @@ int main(int argc, char* argv[])
     }
 
     net::Executor executor;
+    using SslContext = boost::asio::ssl::context;
+    SslContext ctx{SslContext::sslv23};
+    ctx.set_options(SslContext::default_workarounds |
+                    SslContext::no_sslv2            |
+                    SslContext::no_sslv3            |
+                    SslContext::verify_none          );
+    ctx.load_verify_file("server.crt");
 
     net::Connector connector(executor,
-        boost::asio::ip::tcp::endpoint(ipAddress, ipPort), std::chrono::milliseconds(connectTimeoutMs));
+                             boost::asio::ip::tcp::endpoint(ipAddress, ipPort),
+                             std::chrono::milliseconds(connectTimeoutMs));
 
     std::cout << "Start client" << std::endl;
 
     std::promise<client::Connection::ConnectionPtr> connP;
     std::promise<void> doneP;
-    static std::promise<void>* pDonePromise = &doneP;
 
     auto connF = connP.get_future();
     auto doneF = doneP.get_future();
 
-    ::signal(SIGINT, [](int) {
-        if (pDonePromise) {
-            pDonePromise->set_value();
-            pDonePromise = nullptr;
-        }
-    });
-
     std::promise<std::shared_ptr<client::Authentificator>> authP;
     auto authF = authP.get_future();
-    std::promise<boost::asio::ip::tcp::socket> sockP;
+    std::promise<Socket> sockP;
     auto sockF = sockP.get_future();
 
-    connector.connect([&authP, &sockP](boost::asio::ip::tcp::socket s, const std::error_code& ec) {
+    connector.connect(ctx, [&authP, &sockP](Socket s, const std::error_code& ec) {
         if (ec) {
             std::cerr << "Failed to connect: " << ec.message() << '\n';
             authP.set_value({});
@@ -96,7 +96,7 @@ int main(int argc, char* argv[])
     auth->logIn();
     auto sock = sockF.get();
 
-    if (!sock.is_open())
+    if (!sock.lowest_layer().is_open())
         { return 1; }
 
     auto conn = std::make_shared<client::Connection>(std::move(sock));

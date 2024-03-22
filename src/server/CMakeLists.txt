@@ -10,8 +10,12 @@ include_directories(
 )
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${VUSERVER_OUT_DIR}/bin/server)
+set(SSL_FILES server.crt dh2048.pem)
+
 include(configure)
+
+
 
 add_executable(${TARGET} ${SOURCES})
 
-target_link_libraries(${TARGET} serverlib testfunlib utillib commonlib)
+target_link_libraries(${TARGET} serverlib testfunlib utillib)

@@ -15,8 +15,11 @@ include_directories(
 )
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${VUSERVER_OUT_DIR}/bin/client)
+set(SSL_FILES server.crt)
+
 include(configure)
 
 add_executable(${TARGET} ${SOURCES})
 
 target_link_libraries(${TARGET} clientlib ${Boost_LIBRARIES})
+

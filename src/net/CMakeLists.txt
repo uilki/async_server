@@ -1,4 +1,5 @@
 find_package(Threads)
+find_package(OpenSSL REQUIRED)
 
 include_directories(${Boost_INCLUDE_DIRS})
 

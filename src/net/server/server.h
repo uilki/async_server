@@ -5,19 +5,21 @@
 #include "threadpool.h"
 
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/ssl.hpp>
 
 namespace net::server {
 class Server :  public std::enable_shared_from_this<Server>
 {
-    enum {backlog = 10 };
+    enum { backlog = 10 };
 public:
     using RequestHandler = std::function<std::string(std::string, bool&)>;
 
     Server(Executor& executor, const boost::asio::ip::tcp& protocol, RequestHandler handler);
 
     boost::system::error_code start(const boost::asio::ip::tcp::endpoint &endpoint);
-
     void stop();
+    std::string get_password() const;
+
 private:
     Server(const Server&) = delete;
     Server& operator=(const Server&) = delete;
@@ -25,9 +27,10 @@ private:
     boost::system::error_code bind(const boost::asio::ip::tcp::endpoint& endpoint);
     boost::system::error_code listen();
     void startAccept();
-    void onAccept(const std::error_code& err, boost::asio::ip::tcp::socket socket);
+    void onAccept(const boost::system::error_code &err, boost::asio::ip::tcp::socket s);
 
     boost::asio::io_service&       io_service_;
+    boost::asio::ssl::context      ssl_context_;
     StrandPtr                      strand_    ;
     boost::asio::ip::tcp::acceptor acceptor_  ;
     ThreadPool                     pool_      ;

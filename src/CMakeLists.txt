@@ -8,4 +8,4 @@ add_subdirectory(util)
 add_subdirectory(net)
 add_subdirectory(server)
 add_subdirectory(test)
-add_subdirectory(common)
+

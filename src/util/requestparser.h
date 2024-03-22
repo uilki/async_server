@@ -77,10 +77,8 @@ struct Call
 };
 
 // toJson helpers
-
-
 template<typename T>
-std::enable_if_t<std::is_arithmetic_v<details::remove_cv_ref_t<T>>, Value> toValue(T&& t, MemoryPoolAllocator<>& a)
+std::enable_if_t<std::is_arithmetic_v<details::remove_cv_ref_t<T>>, Value> toValue(const T& t, MemoryPoolAllocator<>& a)
     { return Value(t); }
 template<typename T>
 std::enable_if_t<std::is_enum_v<details::remove_cv_ref_t<T>>, Value> toValue(const T& t, MemoryPoolAllocator<>& a)
@@ -156,9 +154,10 @@ public:
         createValueList(l, alloc, t...);
 
         auto it = l.begin();
-        for (const auto& member : propertiesObject)
-        { if (it == l.end()) break;
-            request.AddMember(Value(member.name, alloc).Move(), (*it++).Move(), alloc); }
+        for (const auto& member : propertiesObject) {
+            if (it == l.end()) break;
+            request.AddMember(Value(member.name, alloc).Move(), (*it++).Move(), alloc);
+        }
 
         StringBuffer buffer;
         Writer<StringBuffer> writer(buffer);

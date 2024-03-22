@@ -19,11 +19,10 @@ add_executable(serverlib_test
 )
 
 target_link_libraries(serverlib_test
- PRIVATE
-  GTest::GTest
-  serverlib
-  utillib
-  commonlib
+    PRIVATE
+    GTest::GTest
+    serverlib
+    utillib
 )
 
 add_test(serverlib_gtests serverlib_test)

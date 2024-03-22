@@ -13,4 +13,4 @@ include_directories(
 
 add_library(${TARGET} STATIC ${SOURCES})
 
-target_link_libraries(${TARGET} utillib corelib commonlib)
+target_link_libraries(${TARGET} utillib OpenSSL::Crypto OpenSSL::SSL corelib)

@@ -47,7 +47,7 @@ std::string Registry::call(const std::string &funName, std::list<std::string> &a
     switch (impl_->getFunNum(funName)) {
         GET_FUN_RESULT_TO_STREAM(os, 0, args);
         GET_FUN_RESULT_TO_STREAM(os, 1, args);
-        default: os << "Unregistered function";
+    default: throw BadCall("unregistered");
     }
     return os.str();
 }

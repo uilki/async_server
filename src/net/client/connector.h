@@ -5,19 +5,19 @@
 
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/strand.hpp>
+#include <boost/asio/ssl/stream.hpp>
 
 namespace net {
 class Connector
 {
 public:
-    using Callback  = std::function<void(boost::asio::ip::tcp::socket, boost::system::error_code)>;
+    using Callback  = std::function<void(boost::asio::ssl::stream<boost::asio::ip::tcp::socket>, boost::system::error_code)>;
 
     Connector(Executor&                           executor,
-              boost::asio::ip::tcp::endpoint      ep,
-              std::chrono::steady_clock::duration timeout
-              );
+              boost::asio::ip::tcp::endpoint      ep      ,
+              std::chrono::steady_clock::duration timeout  );
 
-    void connect(Callback cb);
+    void connect(boost::asio::ssl::context &ctx, Callback cb);
 
 private:
     boost::asio::io_service&                  ioService_;

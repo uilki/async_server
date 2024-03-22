@@ -5,6 +5,15 @@
 #include <memory>
 
 namespace holder {
+class BadCall : public std::exception {
+    const char* mes_;
+public:
+    explicit BadCall(const char* mes) : mes_{mes} {}
+
+public:
+    inline const char *what() const noexcept override
+    { return mes_; }
+};
 
 class Registry
 {

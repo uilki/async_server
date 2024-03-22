@@ -10,7 +10,11 @@ struct AuthentificationRequest
 {
     enum ErrorCode { signIn, signUp, invalidToken, userExists, badPassword, unregistered, success, refused, BadRequest};
 
-    explicit AuthentificationRequest(size_t e, const std::list<std::string>& data = {} );
+    inline explicit AuthentificationRequest(size_t errorCode, const std::list<std::string> &data = {})
+        : id  {static_cast<ErrorCode>(errorCode)}
+        , data{data}
+        {}
+
     AuthentificationRequest() = default;
     AuthentificationRequest(const AuthentificationRequest&) = default;
 
@@ -22,9 +26,14 @@ struct SessionRequest
     {
         enum { BadRequest = AuthentificationRequest::BadRequest};
 
-        SessionRequest(size_t                        id  ,
-                       const std::string&            name,
-                       const std::list<std::string>& args );
+        inline SessionRequest(size_t                        id  ,
+                              const std::string&            name,
+                              const std::list<std::string>& args )
+            : id  {id}
+            , name{name}
+            , args{args}
+            {}
+
         SessionRequest() = default;
         SessionRequest(const SessionRequest&) = default;
 
